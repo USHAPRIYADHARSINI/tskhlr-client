@@ -15,6 +15,7 @@ import MyCart from "./Component/MyCart";
 import { CartProvider } from "./context/CartContext";
 import { useContext } from "react";
 import jwtDecode from "jwt-decode";
+import "./App.css";
 
 function App() {
   let token = localStorage.getItem("Authorization");
