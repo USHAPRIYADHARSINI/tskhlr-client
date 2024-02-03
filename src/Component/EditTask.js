@@ -56,7 +56,7 @@ function EditTask({ task }) {
       });
     } else {
       const response = await fetch(
-        `http://localhost:5000/task/edit/${user.userId}/${task._id}`,
+        `${process.env.REACT_APP_SERVER_URL}/task/edit/${user.userId}/${task._id}`,
         {
           method: "PUT",
           body: JSON.stringify(edited),
