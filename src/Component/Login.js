@@ -61,7 +61,7 @@ function Loginpage() {
             >
               click here
             </span>{" "}
-            for login
+            for new user registeration
           </p>
         </div>
       </form>

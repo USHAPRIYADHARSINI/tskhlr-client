@@ -1,5 +1,5 @@
 import {createContext, useState, useEffect} from "react";
-import jwt_decode from "jwt-decode";
+import {jwtDecode} from "jwt-decode";
 import {useNavigate} from "react-router-dom";
 const swal = require('sweetalert2')
 
@@ -17,7 +17,7 @@ export const AuthProvider = ({ children }) => {
     
     const [user, setUser] = useState(() => 
         localStorage.getItem("Authorization")
-            ? jwt_decode(localStorage.getItem("Authorization"))
+            ? jwtDecode(localStorage.getItem("Authorization"))
             : null
     );
 
@@ -45,7 +45,7 @@ export const AuthProvider = ({ children }) => {
         if(logindata !== null){
             console.log("Authorization",JSON.stringify(logindata.token))
             setAuthTokens(logindata.token)
-            setUser(jwt_decode(logindata.token))
+            setUser(jwtDecode(logindata.token))
             localStorage.setItem("Authorization",JSON.stringify(logindata.token))
             console.log("Logged In");
             console.log(logindata.token)
@@ -161,7 +161,7 @@ export const AuthProvider = ({ children }) => {
 
     useEffect(() => {
         if (authTokens) {
-            setUser(jwt_decode(authTokens))
+            setUser(jwtDecode(authTokens))
             console.log(authTokens)
         }
         

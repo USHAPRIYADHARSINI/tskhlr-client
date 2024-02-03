@@ -11,7 +11,7 @@ function Homepage() {
     <>{user? navigate("/dashboard")
     : <div className="home-container">
       <h2>Home</h2>
-      <p className="home-tagline"> Manage your work easier this way <strong>own profile</strong></p>
+      <p className="home-tagline"> Manage your work easier this way </p>
       <div className="home">
         <div className="tag"><button className="home-item" onClick={() => navigate("/login")}>
           Login

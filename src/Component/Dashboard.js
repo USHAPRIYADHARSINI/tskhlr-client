@@ -1,103 +1,207 @@
 import { useState, useEffect, useContext } from "react";
+import dayjs from "dayjs";
+import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
+import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
+import { StaticDateTimePicker } from "@mui/x-date-pickers/StaticDateTimePicker";
+import TextField from "@mui/material/TextField";
 import "./Dashboard.css";
-import { useNavigate } from "react-router-dom"; 
+import { Route, Routes, useNavigate } from "react-router-dom";
 import AuthContext from "../context/AuthContext";
+import { jwtDecode } from "jwt-decode";
+import {
+  Box,
+  Button,
+  FormControl,
+  FormControlLabel,
+  Radio,
+  RadioGroup,
+  FormLabel,
+} from "@mui/material";
+import EditTask from "./EditTask";
+const swal = require("sweetalert2");
 
-function Dashboard() {
-  
+function Dashboard({ setTask }) {
   const { authTokens, user } = useContext(AuthContext);
-  const [res, setRes] = useState([])
+  const [tsk, setTsk] = useState();
+  const [loading, setLoading] = useState(false);
 
-  const changeStatus = async (task, index) =>{
-    let change = null
-    if(task.taskStatus){
-        change = {
-            taskStatus:  false
+  const handleEditButton = async (task, e) => {
+    // e.preventDefault();
+    console.log(task);
+    await setTask(task);
+    navigate(`/edittask/${task._id}`);
+  };
+
+  const handleDelete = async (task, e) => {
+    console.log(task);
+    try {
+      const resp = await fetch(
+        `${process.env.REACT_APP_SERVER_URL}/task/delete/${user.userId}/${task._id}`,
+        {
+          method: "DELETE",
+          headers:  {Authorization:`Bearer ${authTokens}`}
         }
-    }else{
-        change = {
-            taskStatus: true
-        }
+      );
+      if(resp.status === 200){
+        swal.fire({
+          title: "Task Deleted",
+          icon: "success",
+          toast: true,
+          timer: 6000,
+          position: "top-right",
+          timerProgressBar: true,
+          showConfirmButton: false,
+        });
+      }else{
+        swal.fire({
+          title: "Error in deleting, please try again later",
+          icon: "error",
+          toast: true,
+          timer: 6000,
+          position: "top-right",
+          timerProgressBar: true,
+          showConfirmButton: false,
+        });
+      }
+    } catch (error) {
+      console.log(error);
     }
-    await fetch(`${process.env.REACT_APP_SERVER_URL}/users/task/status/${user.userId}/${task.taskId}`, {
-        method: "PUT",
-        body: JSON.stringify(change),
-        headers:  { Authorization: `Bearer ${authTokens}` ,
-                    "Content-Type":"application/json"
-      },
-      })
-      .then((data) => data.json())
-      .then((data) => {
-        if (data.msg === "Task Completed") {
-            swal.fire({
-                title: "Task Completed",
-                icon: "success",
-                toast: true,
-                timer: 6000,
-                position: 'top-right',
-                timerProgressBar: true,
-                showConfirmButton: false,
-            })
-        }else{
-            swal.fire({
-                title: "Task incomplete",
-                icon: "error",
-                toast: true,
-                timer: 6000,
-                position: 'top-right',
-                timerProgressBar: true,
-                showConfirmButton: false,
-            })
-        }
-      })
-  }
+  };
+
+  // const changeStatus = async (task, index) => {
+  //   let change = null;
+  //   if (task.taskStatus) {
+  //     change = {
+  //       taskStatus: false,
+  //     };
+  //   } else {
+  //     change = {
+  //       taskStatus: true,
+  //     };
+  //   }
+  //   await fetch(
+  //     `${process.env.REACT_APP_SERVER_URL}/task/status/${user.userId}/${task.taskId}`,
+  //     {
+  //       method: "PUT",
+  //       body: JSON.stringify(change),
+  //       headers: {
+  //         Authorization: `Bearer ${authTokens}`,
+  //         "Content-Type": "application/json",
+  //       },
+  //     }
+  //   )
+  //     .then((data) => data.json())
+  //     .then((data) => {
+  //       if (data.msg === true) {
+  //         swal.fire({
+  //           title: "Task Completed",
+  //           icon: "success",
+  //           toast: true,
+  //           timer: 6000,
+  //           position: "top-right",
+  //           timerProgressBar: true,
+  //           showConfirmButton: false,
+  //         });
+  //       } else {
+  //         swal.fire({
+  //           title: "Task incomplete",
+  //           icon: "error",
+  //           toast: true,
+  //           timer: 6000,
+  //           position: "top-right",
+  //           timerProgressBar: true,
+  //           showConfirmButton: false,
+  //         });
+  //       }
+  //     });
+  // };
 
   const navigate = useNavigate();
+  const fetchdata = async () => {
+    try {
+      const resp = await fetch(
+        `${process.env.REACT_APP_SERVER_URL}/task/all/${user.userId}`,
+        {
+          method: "GET",
+          // headers:  {Authorization:`Bearer ${authTokens}`}
+        }
+      );
+      const jsonresp = await resp.json();
+      await setTsk(jsonresp.data);
+      console.log(tsk);
+    } catch (error) {
+      console.log(error);
+    }
+    setLoading(true);
+    console.log(tsk);
+  };
 
   useEffect(() => {
-    console.log(authTokens)
-    if(authTokens){
-      fetch(`${process.env.REACT_APP_SERVER_URL}/users/task/all/${user.userId}`, {
-        method: "GET",
-        headers:  {Authorization:`Bearer ${authTokens}`}
-    })
-      .then((data)=>data.json())
-      .then((data)=>setRes(data))
+    console.log(authTokens);
+    if (authTokens) {
+      fetchdata();
     }
   }, []);
 
-  var content = null;
-
-  if (res.length > 0) {
-    // console.log(res)
-    content = res.map((task, index) => (
-      <div className="card" key={index}>
-        <img src={task.image} className="img" />
-        <div className="cont">
-          <div className="title">{task.title}</div>
-          <div className="sub">{task.details}</div>
-          <div className="home-hint">{task.deadline}</div>
-          <div className="home-hint">{task.remainder}</div>
-          <div className="home-hint">{task.taskStatus}</div>
-          <button onClick={(e) => changeStatus(task, index)}>task.taskStatus? <p>Mark incomplete</p>: <p>Mark complete</p></button>
-        </div>
-      </div>
-    ));
-  }
+  // if (tsk && tsk.length > 0) {
+  //   console.log(tsk.length);
+  //   content = tsk.map((task, index) => (
+  //     <div className="card" key={index}>
+  //       <div className="cont">
+  //         <div className="title">{task.title}</div>
+  //         <div className="sub">{task.details}</div>
+  //       </div>
+  //     </div>
+  //   ));
+  // }
 
   return (
     <div className="books-cont">
       <div className="heading">
-        <h2>Profile</h2>
+        {user? <h2>{user.userName}'s Profile</h2>: null}
       </div>
-      user? <div>
-        <p>{user.userName}</p>
-        <p>{user.email}</p>
-      </div>
-      : null
       <div className="alltasks">
-        <h3>My tasks</h3>
-        <div>{content}</div>
+        <div style={{display:"flex", flexDirection: "row",  justifyContent: "space-evenly"}}>
+          <h3>My tasks</h3>
+          <Button variant='outlined' onClick={() => navigate("/newtask")}> + New </Button>
+        </div>
+        <div className="tasks">
+          {loading
+            ? tsk.map((task, index) => (
+                <div className="card" key={index}>
+                  <div className="cont">
+                    <div className="title">{task.title}</div>
+                    <div className="sub">{task.details}</div>
+                    <div className="sub">
+                      <strong>Deadline :</strong> {task.deadline}
+                    </div>
+                    <div className="sub">
+                      <strong>Remainder :</strong> {task.remainder}
+                    </div>
+                    <div
+                      className="sub"
+                      style={
+                        task.taskStatus === "completed"
+                          ? { color: "green" }
+                          : null
+                      }
+                    >
+                      Status : {task.taskStatus ? task.taskStatus : "No status"}
+                    </div>
+                    <Button
+                      size="small"
+                      onClick={(e) => handleEditButton(task, e)}
+                    >
+                      Edit
+                    </Button>
+                    <Button size="small" onClick={(e) => handleDelete(task, e)}>
+                      Delete
+                    </Button>
+                  </div>
+                </div>
+              ))
+            : null}
+        </div>
       </div>
     </div>
   );
